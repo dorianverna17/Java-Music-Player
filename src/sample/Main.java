@@ -20,12 +20,7 @@ public class Main extends Application {
         primaryStage.show();
     }
 
-    public static void fill_list_view() {
-//        list_view.setText()
-    }
-
     public static void main(String[] args) {
         launch(args);
-//        fill_list_view();
     }
 }

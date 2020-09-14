@@ -22,8 +22,43 @@ import java.nio.Buffer;
 public class Controller {
     private ModuleInfo ImageIO;
 
-    public void edit_start() {
-        System.out.println("hello");
+    public void play_song() throws Exception {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Open Resource File");
+        File file = null;
+        file = fileChooser.showOpenDialog(new Stage());
+        String ext = null;
+        if (file != null)
+            ext = file.getName().substring(file.getName().indexOf(".") + 1);
+        if (ext != null) {
+            if (ext.equalsIgnoreCase("m4a")
+                    || ext.equalsIgnoreCase("flac")
+                    || ext.equalsIgnoreCase("mp3")
+                    || ext.equalsIgnoreCase("mp4")
+                    || ext.equalsIgnoreCase("wav")
+                    || ext.equalsIgnoreCase("wma")
+                    || ext.equalsIgnoreCase("aac")
+                    || ext.equalsIgnoreCase("aifc")) {
+                try {
+                    File audioFile = new File(file.getPath());
+                    AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
+                    AudioFormat format = audioStream.getFormat();
+                    DataLine.Info info = new DataLine.Info(Clip.class, format);
+                    Clip audioClip = (Clip) AudioSystem.getLine(info);
+                    audioClip.open(audioStream);
+                    audioClip.start();
+                } catch (Exception e) {
+                    String workingDir = System.getProperty("user.dir");
+                    System.out.println("Current working directory : " + workingDir);
+                    e.printStackTrace();
+                }
+            } else {
+                Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                errorAlert.setHeaderText("Input not valid");
+                errorAlert.setContentText("The file choosen must be an audio file");
+                errorAlert.showAndWait();
+            }
+        }
     }
 
     public void create_playlist() throws Exception {
@@ -44,8 +79,6 @@ public class Controller {
                     || ext.equalsIgnoreCase("aac")
                     || ext.equalsIgnoreCase("aifc")) {
                 try {
-//                Desktop dt = Desktop.getDesktop();
-//                dt.open(file);
                     File audioFile = new File(file.getPath());
                     AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
                     AudioFormat format = audioStream.getFormat();

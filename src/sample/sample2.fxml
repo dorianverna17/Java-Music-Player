@@ -14,7 +14,7 @@
          </font>
       </Label>
       <TextField fx:id="textfield" layoutX="22.0" layoutY="50.0" prefHeight="26.0" prefWidth="354.0" />
-      <Button fx:id="createbutton" layoutX="167.0" layoutY="86.0" mnemonicParsing="false" text="Create">
+      <Button fx:id="createbutton" layoutX="167.0" layoutY="86.0" mnemonicParsing="false" onAction="#nameplaylist" text="Create">
          <font>
             <Font name="System Bold Italic" size="14.0" />
          </font>

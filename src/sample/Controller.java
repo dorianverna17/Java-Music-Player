@@ -1,13 +1,19 @@
 package sample;
 
 import javafx.application.Application;
+import javafx.beans.Observable;
+import javafx.collections.FXCollections;
+import javafx.collections.FXCollections.*;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.scene.control.Button;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Slider;
+import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -18,19 +24,20 @@ import jdk.internal.module.ModuleInfo;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.print.attribute.standard.Media;
+import javax.sound.midi.SysexMessage;
 import javax.sound.sampled.*;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.applet.AudioClip;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.nio.Buffer;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import java.nio.file.Paths;
+import java.util.LinkedList;
+import java.util.concurrent.TimeUnit;
 
 public class Controller{
     @FXML
@@ -42,8 +49,25 @@ public class Controller{
     @FXML
     private Slider slider_volume;
 
+    @FXML
+    private Label label2;
+
+    @FXML
+    private ListView<?> viewplaylist;
+
+    @FXML
+    public Button addsong;
+
+    @FXML
+    private Button removesong;
+
+    @FXML
+    private Button listenplaylist;
+
+    ObservableList list;
     Clip audioClip = null;
     File file;
+    File playlist_file;
 
     public void play_song() throws Exception {
         FileChooser fileChooser = new FileChooser();
@@ -137,5 +161,169 @@ public class Controller{
     }
 
     public void choose_playlist() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Open Resource File");
+        String currentPath = Paths.get(".").toAbsolutePath().normalize().toString();
+        fileChooser.setInitialDirectory(new File(currentPath));
+        playlist_file = null;
+        playlist_file = fileChooser.showOpenDialog(new Stage());
+        if (playlist_file != null) {
+            String string = playlist_file.getName().substring(0, playlist_file.getName().indexOf(".txt"));
+            label2.setText(string);
+            addsong.setVisible(true);
+            removesong.setVisible(true);
+            listenplaylist.setVisible(true);
+            viewplaylist.setVisible(true);
+            LinkedList<String> list_aux = new LinkedList<String>();
+
+            try (BufferedReader br = new BufferedReader(new FileReader(playlist_file))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    list_aux.add(line.substring(line.lastIndexOf("\\") + 1));
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            list = FXCollections.observableArrayList(list_aux);
+            viewplaylist.setItems(list);
+        }
+    }
+
+    public void addsong_toplaylist(ActionEvent actionEvent) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Open Resource File");
+
+        File file1 = null;
+        file1 = fileChooser.showOpenDialog(new Stage());
+        String ext = null;
+        if (file1 != null)
+            ext = file1.getName().substring(file1.getName().indexOf(".") + 1);
+        if (ext != null) {
+            if (ext.equalsIgnoreCase("m4a")
+                    || ext.equalsIgnoreCase("flac")
+                    || ext.equalsIgnoreCase("mp3")
+                    || ext.equalsIgnoreCase("mp4")
+                    || ext.equalsIgnoreCase("wav")
+                    || ext.equalsIgnoreCase("wma")
+                    || ext.equalsIgnoreCase("aac")
+                    || ext.equalsIgnoreCase("aifc")) {
+                try(FileWriter fw = new FileWriter(playlist_file, true);
+                    BufferedWriter bw = new BufferedWriter(fw);
+                    PrintWriter out = new PrintWriter(bw)) {
+                    out.println(file1.getAbsolutePath());
+                    out.flush();
+                    LinkedList<String> list_aux = new LinkedList<String>();
+
+                    try (BufferedReader br = new BufferedReader(new FileReader(playlist_file))) {
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            list_aux.add(line.substring(line.lastIndexOf("\\") + 1));
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    list = FXCollections.observableArrayList(list_aux);
+                    viewplaylist.setItems(list);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public void removesong_fromplaylist(ActionEvent actionEvent) throws Exception{
+        if (actionEvent.getSource() == removesong) {
+            LinkedList<String> list_aux = new LinkedList<String>();
+            LinkedList<String> list_aux2 = new LinkedList<String>();
+
+            BufferedReader br = new BufferedReader(new FileReader(playlist_file));
+            try {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    list_aux.add(line.substring(line.lastIndexOf("\\") + 1));
+                    list_aux2.add(line);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            br.close();
+
+            int index;
+            if (list_aux.contains(viewplaylist.getSelectionModel().getSelectedItem())) {
+                index = list_aux.indexOf(viewplaylist.getSelectionModel().getSelectedItem());
+                list_aux.remove(viewplaylist.getSelectionModel().getSelectedItem());
+                list_aux2.remove(index);
+            }
+
+            int i;
+            FileWriter fw = new FileWriter(playlist_file, false);
+            BufferedWriter bw = new BufferedWriter(fw);
+            PrintWriter out = new PrintWriter(bw);
+            LinkedList<String> list_aux3 = new LinkedList<String>();
+            for (i = 0; i < list_aux2.size(); i++) {
+                out.println(list_aux2.get(i));
+            }
+            out.flush();
+            br = new BufferedReader(new FileReader(playlist_file));
+            try {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    list_aux3.add(line.substring(line.lastIndexOf("\\") + 1));
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            list = FXCollections.observableArrayList(list_aux3);
+            viewplaylist.setItems(list);
+        }
+    }
+
+    public void listen_playlist(ActionEvent actionEvent) throws Exception {
+        LinkedList<String> list_aux = new LinkedList<String>();
+        BufferedReader br = new BufferedReader(new FileReader(playlist_file));
+        int i;
+
+        try {
+            String line;
+            while ((line = br.readLine()) != null) {
+                list_aux.add(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        for (i = 0; i < list_aux.size(); i++) {
+            File audioFile = new File(list_aux.get(i));
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
+            AudioFormat format = audioStream.getFormat();
+            DataLine.Info info = new DataLine.Info(Clip.class, format);
+            if (audioClip != null) {
+                audioClip.close();
+            }
+            audioClip = (Clip) AudioSystem.getLine(info);
+            audioClip.open(audioStream);
+            afisare_melodie();
+            audioClip.start();
+
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(audioFile);
+            AudioFormat format1 = audioInputStream.getFormat();
+            long audioFileLength = audioFile.length();
+            int frameSize = format1.getFrameSize();
+            float frameRate = format1.getFrameRate();
+            float durationInSeconds = (audioFileLength / (frameSize * frameRate));
+            //TimeUnit.SECONDS.sleep((long)durationInSeconds);
+            try {
+                Thread.sleep((long)durationInSeconds * 1000);
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            }
+
+            FloatControl gainControl = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
+            double gain = 0.5; // number between 0 and 1 (loudest)
+            slider_volume.setValue(0.5);
+            float dB = (float) (Math.log(gain) / Math.log(10.0) * 20.0);
+            gainControl.setValue(dB);
+//            while (audioClip.isRunning())
+//                label1.setText(list_aux.get(i));
+        }
     }
 }

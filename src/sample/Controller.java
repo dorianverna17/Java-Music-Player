@@ -24,7 +24,6 @@ import javafx.stage.Stage;
 import jdk.internal.module.ModuleInfo;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
-import javax.print.attribute.standard.Media;
 import javax.sound.midi.SysexMessage;
 import javax.sound.sampled.*;
 import javax.swing.*;
@@ -40,6 +39,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
+
+//for mp3s
+import java.io.File;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaPlayer.*;
 
 public class Controller {
     @FXML
@@ -78,6 +83,9 @@ public class Controller {
     File file;
     public static File playlist_file;
     Thread additionalthread = null;
+
+    //for mp3s
+    MediaPlayer mediaPlayer;
 
     @FXML
     public void initialize() {
@@ -118,24 +126,37 @@ public class Controller {
                     || ext.equalsIgnoreCase("aac")
                     || ext.equalsIgnoreCase("aifc")) {
                 try {
-//                    if (ext.equals("mp3"))
-                    File audioFile = new File(file.getPath());
-                    AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
-                    AudioFormat format = audioStream.getFormat();
-                    DataLine.Info info = new DataLine.Info(Clip.class, format);
-                    if (audioClip != null) {
-                        audioClip.close();
-                    }
-                    audioClip = (Clip) AudioSystem.getLine(info);
-                    audioClip.open(audioStream);
-                    afisare_melodie();
-                    audioClip.start();
+                    if (ext.equals("aifc") || ext.equals("wav")) {
+                        File audioFile = new File(file.getPath());
+                        AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
+                        AudioFormat format = audioStream.getFormat();
+                        DataLine.Info info = new DataLine.Info(Clip.class, format);
+                        if (audioClip != null) {
+                            audioClip.close();
+                        }
+                        audioClip = (Clip) AudioSystem.getLine(info);
+                        audioClip.open(audioStream);
+                        afisare_melodie();
+                        audioClip.start();
 
-                    FloatControl gainControl = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
-                    double gain = 0.5; // number between 0 and 1 (loudest)
-                    slider_volume.setValue(0.5);
-                    float dB = (float) (Math.log(gain) / Math.log(10.0) * 20.0);
-                    gainControl.setValue(dB);
+                        FloatControl gainControl = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
+                        double gain = 0.5; // number between 0 and 1 (loudest)
+                        slider_volume.setValue(0.5);
+                        float dB = (float) (Math.log(gain) / Math.log(10.0) * 20.0);
+                        gainControl.setValue(dB);
+                    }
+                    if (ext.equals("mp3")) {
+                        String string_path = file.getPath();
+                        Media music = new Media(new File(string_path).toURI().toString());
+                        if (mediaPlayer != null) {
+                            mediaPlayer.stop();
+                        }
+                        mediaPlayer = new MediaPlayer(music);
+                        afisare_melodie();
+                        mediaPlayer.play();
+                        slider_volume.setValue(0.5);
+                        mediaPlayer.setVolume(slider_volume.getValue());
+                    }
                 } catch (Exception e) {
                     String workingDir = System.getProperty("user.dir");
                     System.out.println("Current working directory : " + workingDir);
@@ -172,6 +193,10 @@ public class Controller {
             audioClip.close();
             label1.setText("");
         }
+        if (mediaPlayer != null) {
+            mediaPlayer.stop();
+            label1.setText("");
+        }
         if (additionalthread != null)
             additionalthread.stop();
         removesong.setDisable(false);
@@ -186,6 +211,13 @@ public class Controller {
             else
                 audioClip.start();
         }
+        if (mediaPlayer != null) {
+            boolean playing = mediaPlayer.getStatus().equals(Status.PLAYING);
+            if (playing == true)
+                mediaPlayer.pause();
+            else
+                mediaPlayer.play();
+        }
     }
 
     public void setvolume() {
@@ -195,9 +227,27 @@ public class Controller {
             float dB = (float) (Math.log(value) / Math.log(10.0) * 20.0);
             gainControl.setValue(dB);
         }
+        if (mediaPlayer != null) {
+            mediaPlayer.setVolume((float) slider_volume.getValue());
+        }
     }
 
     public void choose_playlist() throws Exception {
+        try {
+            Path currentRelativePath = Paths.get("");
+            String s = currentRelativePath.toAbsolutePath().toString();
+            File userDir = new File(s);
+            File[] allfiles = userDir.listFiles();
+            LinkedList<String> list = new LinkedList<String>();
+            for (int i = 0; i < allfiles.length; i++) {
+                if (allfiles[i].toString().endsWith(".txt"))
+                    list.add(allfiles[i].toString().substring(0, allfiles[i].toString().indexOf(".txt")));
+            }
+            list2 = FXCollections.observableArrayList(list);
+            listofplaylists.setItems(list2);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         addsong.setVisible(false);
         removesong.setVisible(false);
         listenplaylist.setVisible(false);
@@ -337,7 +387,6 @@ public class Controller {
                                 }
                                 audioClip = (Clip) AudioSystem.getLine(info);
                                 audioClip.open(audioStream);
-                                System.out.println(audioClip.getFrameLength());
                                 audioClip.start();
 
                                 AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(audioFile);

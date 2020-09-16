@@ -118,6 +118,7 @@ public class Controller {
                     || ext.equalsIgnoreCase("aac")
                     || ext.equalsIgnoreCase("aifc")) {
                 try {
+//                    if (ext.equals("mp3"))
                     File audioFile = new File(file.getPath());
                     AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
                     AudioFormat format = audioStream.getFormat();
@@ -336,19 +337,20 @@ public class Controller {
                                 }
                                 audioClip = (Clip) AudioSystem.getLine(info);
                                 audioClip.open(audioStream);
+                                System.out.println(audioClip.getFrameLength());
                                 audioClip.start();
 
                                 AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(audioFile);
                                 AudioFormat format1 = audioInputStream.getFormat();
-                                long audioFileLength = audioFile.length();
-                                int frameSize = format1.getFrameSize();
-                                float frameRate = format1.getFrameRate();
-                                float durationInSeconds = (audioFileLength / (frameSize * frameRate));
+                                long frames = audioInputStream.getFrameLength();
+                                double durationInSeconds = (frames+0.0) / format.getFrameRate();
+
                                 FloatControl gainControl = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
                                 double gain = 0.5; // number between 0 and 1 (loudest)
                                 slider_volume.setValue(0.5);
                                 float dB = (float) (Math.log(gain) / Math.log(10.0) * 20.0);
                                 gainControl.setValue(dB);
+
                                 this.sleep((long)durationInSeconds * 1000);
                             } catch (Exception ex) { }
                         }

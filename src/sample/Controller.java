@@ -39,7 +39,7 @@ import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
-public class Controller{
+public class Controller {
     @FXML
     private Pane pane;
 
@@ -207,9 +207,9 @@ public class Controller{
                     || ext.equalsIgnoreCase("wma")
                     || ext.equalsIgnoreCase("aac")
                     || ext.equalsIgnoreCase("aifc")) {
-                try(FileWriter fw = new FileWriter(playlist_file, true);
-                    BufferedWriter bw = new BufferedWriter(fw);
-                    PrintWriter out = new PrintWriter(bw)) {
+                try (FileWriter fw = new FileWriter(playlist_file, true);
+                     BufferedWriter bw = new BufferedWriter(fw);
+                     PrintWriter out = new PrintWriter(bw)) {
                     out.println(file1.getAbsolutePath());
                     out.flush();
                     LinkedList<String> list_aux = new LinkedList<String>();
@@ -231,7 +231,7 @@ public class Controller{
         }
     }
 
-    public void removesong_fromplaylist(ActionEvent actionEvent) throws Exception{
+    public void removesong_fromplaylist(ActionEvent actionEvent) throws Exception {
         if (actionEvent.getSource() == removesong) {
             LinkedList<String> list_aux = new LinkedList<String>();
             LinkedList<String> list_aux2 = new LinkedList<String>();
@@ -279,51 +279,59 @@ public class Controller{
     }
 
     public void listen_playlist(ActionEvent actionEvent) throws Exception {
-        LinkedList<String> list_aux = new LinkedList<String>();
-        BufferedReader br = new BufferedReader(new FileReader(playlist_file));
-        int i;
-
         try {
-            String line;
-            while ((line = br.readLine()) != null) {
-                list_aux.add(line);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        for (i = 0; i < list_aux.size(); i++) {
-            File audioFile = new File(list_aux.get(i));
-            AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
-            AudioFormat format = audioStream.getFormat();
-            DataLine.Info info = new DataLine.Info(Clip.class, format);
-            if (audioClip != null) {
-                audioClip.close();
-            }
-            audioClip = (Clip) AudioSystem.getLine(info);
-            audioClip.open(audioStream);
-            afisare_melodie();
-            audioClip.start();
+            Thread t = new Thread() {
+                public void run() {
+                    LinkedList<String> list_aux = new LinkedList<String>();
+                    BufferedReader br = null;
+                    try {
+                        br = new BufferedReader(new FileReader(playlist_file));
+                    } catch (Exception e) { }
+                    int i;
+                    try {
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            list_aux.add(line);
+                        }
+                        for (i = 0; i < list_aux.size(); i++) {
+                            file = new File(list_aux.get(i));
+                            File audioFile = new File(list_aux.get(i));
+                            AudioInputStream audioStream = null;
 
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(audioFile);
-            AudioFormat format1 = audioInputStream.getFormat();
-            long audioFileLength = audioFile.length();
-            int frameSize = format1.getFrameSize();
-            float frameRate = format1.getFrameRate();
-            float durationInSeconds = (audioFileLength / (frameSize * frameRate));
-            //TimeUnit.SECONDS.sleep((long)durationInSeconds);
-            try {
-                Thread.sleep((long)durationInSeconds * 1000);
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-            }
+                            try {
+                                audioStream = AudioSystem.getAudioInputStream(audioFile);
+                                AudioFormat format = audioStream.getFormat();
+                                DataLine.Info info = new DataLine.Info(Clip.class, format);
 
-            FloatControl gainControl = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
-            double gain = 0.5; // number between 0 and 1 (loudest)
-            slider_volume.setValue(0.5);
-            float dB = (float) (Math.log(gain) / Math.log(10.0) * 20.0);
-            gainControl.setValue(dB);
-//            while (audioClip.isRunning())
-//                label1.setText(list_aux.get(i));
-        }
+                                if (audioClip != null) {
+                                    audioClip.close();
+                                }
+                                audioClip = (Clip) AudioSystem.getLine(info);
+                                audioClip.open(audioStream);
+                                //afisare_melodie();
+                                audioClip.start();
+
+                                AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(audioFile);
+                                AudioFormat format1 = audioInputStream.getFormat();
+                                long audioFileLength = audioFile.length();
+                                int frameSize = format1.getFrameSize();
+                                float frameRate = format1.getFrameRate();
+                                float durationInSeconds = (audioFileLength / (frameSize * frameRate));
+                                this.sleep((long)durationInSeconds * 1000);
+                            } catch (Exception ex) { }
+                            FloatControl gainControl = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
+                            double gain = 0.5; // number between 0 and 1 (loudest)
+                            slider_volume.setValue(0.5);
+                            float dB = (float) (Math.log(gain) / Math.log(10.0) * 20.0);
+                            gainControl.setValue(dB);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            };
+            t.setDaemon(true);
+            t.start();
+        } catch (Exception exe) { }
     }
 }

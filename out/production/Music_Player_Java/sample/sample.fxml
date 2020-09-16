@@ -80,4 +80,10 @@
          <Font name="System Bold Italic" size="17.0" />
       </font>
    </Button>
+   <ListView fx:id="listofplaylists" layoutX="244.0" layoutY="172.0" prefHeight="281.0" prefWidth="501.0" visible="false" />
+   <Button fx:id="selectplaylistbutton" layoutX="779.0" layoutY="20.0" mnemonicParsing="false" onAction="#selectthisplaylist" prefHeight="31.0" prefWidth="78.0" text="Select" visible="false">
+      <font>
+         <Font name="System Bold Italic" size="15.0" />
+      </font>
+   </Button>
 </Pane>

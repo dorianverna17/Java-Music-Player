@@ -117,13 +117,8 @@ public class Controller {
         if (file != null)
             ext = file.getName().substring(file.getName().indexOf(".") + 1);
         if (ext != null) {
-            if (ext.equalsIgnoreCase("m4a")
-                    || ext.equalsIgnoreCase("flac")
-                    || ext.equalsIgnoreCase("mp3")
-                    || ext.equalsIgnoreCase("mp4")
+            if (ext.equalsIgnoreCase("mp3")
                     || ext.equalsIgnoreCase("wav")
-                    || ext.equalsIgnoreCase("wma")
-                    || ext.equalsIgnoreCase("aac")
                     || ext.equalsIgnoreCase("aifc")) {
                 try {
                     if (ext.equals("aifc") || ext.equals("wav")) {
@@ -133,6 +128,15 @@ public class Controller {
                         DataLine.Info info = new DataLine.Info(Clip.class, format);
                         if (audioClip != null) {
                             audioClip.close();
+                        }
+                        if (audioClip != null) {
+                            if (audioClip.isRunning())
+                                audioClip.stop();
+                        }
+                        if (mediaPlayer != null) {
+                            boolean playing = mediaPlayer.getStatus().equals(Status.PLAYING);
+                            if (playing == true)
+                                mediaPlayer.stop();
                         }
                         audioClip = (Clip) AudioSystem.getLine(info);
                         audioClip.open(audioStream);
@@ -150,6 +154,15 @@ public class Controller {
                         Media music = new Media(new File(string_path).toURI().toString());
                         if (mediaPlayer != null) {
                             mediaPlayer.stop();
+                        }
+                        if (audioClip != null) {
+                            if (audioClip.isRunning())
+                                audioClip.stop();
+                        }
+                        if (mediaPlayer != null) {
+                            boolean playing = mediaPlayer.getStatus().equals(Status.PLAYING);
+                            if (playing == true)
+                                mediaPlayer.stop();
                         }
                         mediaPlayer = new MediaPlayer(music);
                         afisare_melodie();
@@ -265,13 +278,8 @@ public class Controller {
         if (file1 != null)
             ext = file1.getName().substring(file1.getName().indexOf(".") + 1);
         if (ext != null) {
-            if (ext.equalsIgnoreCase("m4a")
-                    || ext.equalsIgnoreCase("flac")
-                    || ext.equalsIgnoreCase("mp3")
-                    || ext.equalsIgnoreCase("mp4")
+            if (ext.equalsIgnoreCase("mp3")
                     || ext.equalsIgnoreCase("wav")
-                    || ext.equalsIgnoreCase("wma")
-                    || ext.equalsIgnoreCase("aac")
                     || ext.equalsIgnoreCase("aifc")) {
                 FileWriter fw;
                 BufferedWriter bw;
@@ -368,6 +376,16 @@ public class Controller {
                         if (index == -1)
                             index = 0;
                         for (i = index; i < list_aux.size(); i++) {
+
+                            list_aux = new LinkedList<String>();
+                            try {
+                                br = new BufferedReader(new FileReader(playlist_file));
+                            } catch (Exception e) { }
+                            String line1;
+                            while ((line1 = br.readLine()) != null) {
+                                list_aux.add(line1);
+                            }
+
                             file = new File(list_aux.get(i));
                             Platform.runLater(new Runnable(){
                                 public void run() {
@@ -376,31 +394,70 @@ public class Controller {
                             });
                             File audioFile = new File(list_aux.get(i));
                             AudioInputStream audioStream = null;
-
+                            String ext = null;
+                            if (list_aux.get(i) != null)
+                                ext = file.getName().substring(file.getName().indexOf(".") + 1);
                             try {
-                                audioStream = AudioSystem.getAudioInputStream(audioFile);
-                                AudioFormat format = audioStream.getFormat();
-                                DataLine.Info info = new DataLine.Info(Clip.class, format);
+                                if (ext.equals("aifc") || ext.equals("wav")) {
+                                    audioStream = AudioSystem.getAudioInputStream(audioFile);
+                                    AudioFormat format = audioStream.getFormat();
+                                    DataLine.Info info = new DataLine.Info(Clip.class, format);
 
-                                if (audioClip != null) {
-                                    audioClip.close();
+                                    if (audioClip != null) {
+                                        audioClip.close();
+                                    }
+                                    if (audioClip != null) {
+                                        if (audioClip.isRunning())
+                                            audioClip.stop();
+                                    }
+                                    if (mediaPlayer != null) {
+                                        boolean playing = mediaPlayer.getStatus().equals(Status.PLAYING);
+                                        if (playing == true)
+                                            mediaPlayer.stop();
+                                    }
+                                    audioClip = (Clip) AudioSystem.getLine(info);
+                                    audioClip.open(audioStream);
+                                    audioClip.start();
+
+                                    AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(audioFile);
+                                    AudioFormat format1 = audioInputStream.getFormat();
+                                    long frames = audioInputStream.getFrameLength();
+                                    double durationInSeconds = (frames + 0.0) / format.getFrameRate();
+
+                                    FloatControl gainControl = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
+                                    double gain = 0.5; // number between 0 and 1 (loudest)
+                                    slider_volume.setValue(0.5);
+                                    float dB = (float) (Math.log(gain) / Math.log(10.0) * 20.0);
+                                    gainControl.setValue(dB);
+
+                                    this.sleep((long) durationInSeconds * 1000);
                                 }
-                                audioClip = (Clip) AudioSystem.getLine(info);
-                                audioClip.open(audioStream);
-                                audioClip.start();
+                                if (ext.equals("mp3")) {
+                                    String string_path = file.getPath();
+                                    Media music = new Media(new File(string_path).toURI().toString());
 
-                                AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(audioFile);
-                                AudioFormat format1 = audioInputStream.getFormat();
-                                long frames = audioInputStream.getFrameLength();
-                                double durationInSeconds = (frames+0.0) / format.getFrameRate();
+                                    if (mediaPlayer != null) {
+                                        mediaPlayer.stop();
+                                    }
+                                    if (audioClip != null) {
+                                        if (audioClip.isRunning())
+                                            audioClip.stop();
+                                    }
+                                    if (mediaPlayer != null) {
+                                        boolean playing = mediaPlayer.getStatus().equals(Status.PLAYING);
+                                        if (playing == true)
+                                            mediaPlayer.stop();
+                                    }
+                                    mediaPlayer = new MediaPlayer(music);
+                                    afisare_melodie();
+                                    mediaPlayer.play();
+                                    slider_volume.setValue(0.5);
+                                    mediaPlayer.setVolume(slider_volume.getValue());
 
-                                FloatControl gainControl = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
-                                double gain = 0.5; // number between 0 and 1 (loudest)
-                                slider_volume.setValue(0.5);
-                                float dB = (float) (Math.log(gain) / Math.log(10.0) * 20.0);
-                                gainControl.setValue(dB);
-
-                                this.sleep((long)durationInSeconds * 1000);
+                                    this.sleep(2000);
+                                    double duration = music.getDuration().toSeconds();
+                                    this.sleep((long)duration * 1000);
+                                }
                             } catch (Exception ex) { }
                         }
                     } catch (IOException e) {
@@ -416,31 +473,33 @@ public class Controller {
 
     public void selectthisplaylist(ActionEvent actionEvent) {
         if (actionEvent.getSource() == selectplaylistbutton) {
-            playlist_file = new File(listofplaylists.getSelectionModel().getSelectedItem() + ".txt");
-            if (playlist_file != null) {
-                String string = playlist_file.getName().substring(0, playlist_file.getName().indexOf(".txt"));
-                label2.setText(string);
-                addsong.setVisible(true);
-                removesong.setVisible(true);
-                listenplaylist.setVisible(true);
-                viewplaylist.setVisible(true);
-                LinkedList<String> list_aux = new LinkedList<String>();
+            if (listofplaylists.getSelectionModel().getSelectedItem() != null) {
+                playlist_file = new File(listofplaylists.getSelectionModel().getSelectedItem() + ".txt");
+                if (playlist_file != null) {
+                    String string = playlist_file.getName().substring(0, playlist_file.getName().indexOf(".txt"));
+                    label2.setText(string);
+                    addsong.setVisible(true);
+                    removesong.setVisible(true);
+                    listenplaylist.setVisible(true);
+                    viewplaylist.setVisible(true);
+                    LinkedList<String> list_aux = new LinkedList<String>();
 
-                try (BufferedReader br = new BufferedReader(new FileReader(playlist_file))) {
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        list_aux.add(line.substring(line.lastIndexOf("\\") + 1));
+                    try (BufferedReader br = new BufferedReader(new FileReader(playlist_file))) {
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            list_aux.add(line.substring(line.lastIndexOf("\\") + 1));
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    list = FXCollections.observableArrayList(list_aux);
+                    if (list.size() == 0)
+                        removesong.setDisable(true);
+                    viewplaylist.setItems(list);
                 }
-                list = FXCollections.observableArrayList(list_aux);
-                if (list.size() == 0)
-                    removesong.setDisable(true);
-                viewplaylist.setItems(list);
+                listofplaylists.setVisible((false));
+                selectplaylistbutton.setVisible(false);
             }
-            listofplaylists.setVisible((false));
-            selectplaylistbutton.setVisible(false);
         }
     }
 }

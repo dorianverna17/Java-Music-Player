@@ -1,0 +1,22 @@
+<component name="ArtifactManager">
+  <artifact type="javafx" name="Music_Player_Java">
+    <output-path>$PROJECT_DIR$/out/artifacts/Music_Player_Java</output-path>
+    <properties id="javafx-properties">
+      <options>
+        <option name="appClass" value="sample.Main" />
+        <option name="description" value="" />
+        <option name="htmlPlaceholderId" value="" />
+        <option name="nativeBundle" value="exe" />
+        <option name="title" value="" />
+        <option name="vendor" value="" />
+        <option name="version" value="" />
+      </options>
+    </properties>
+    <root id="root">
+      <element id="archive" name="Music_Player_Java.jar">
+        <element id="module-output" name="Music_Player_Java" />
+      </element>
+      <element id="library" level="application" name="lib" />
+    </root>
+  </artifact>
+</component>

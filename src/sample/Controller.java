@@ -204,10 +204,12 @@ public class Controller {
     public void stop_melodie() {
         if (audioClip != null) {
             audioClip.close();
+            audioClip = null;
             label1.setText("");
         }
         if (mediaPlayer != null) {
             mediaPlayer.stop();
+            mediaPlayer = null;
             label1.setText("");
         }
         if (additionalthread != null)
@@ -407,13 +409,17 @@ public class Controller {
                                         audioClip.close();
                                     }
                                     if (audioClip != null) {
-                                        if (audioClip.isRunning())
+                                        if (audioClip.isRunning()) {
                                             audioClip.stop();
+                                            audioClip = null;
+                                        }
                                     }
                                     if (mediaPlayer != null) {
                                         boolean playing = mediaPlayer.getStatus().equals(Status.PLAYING);
-                                        if (playing == true)
+                                        if (playing == true) {
                                             mediaPlayer.stop();
+                                            mediaPlayer = null;
+                                        }
                                     }
                                     audioClip = (Clip) AudioSystem.getLine(info);
                                     audioClip.open(audioStream);
@@ -440,13 +446,17 @@ public class Controller {
                                         mediaPlayer.stop();
                                     }
                                     if (audioClip != null) {
-                                        if (audioClip.isRunning())
+                                        if (audioClip.isRunning()) {
                                             audioClip.stop();
+                                            audioClip = null;
+                                        }
                                     }
                                     if (mediaPlayer != null) {
                                         boolean playing = mediaPlayer.getStatus().equals(Status.PLAYING);
-                                        if (playing == true)
+                                        if (playing == true) {
                                             mediaPlayer.stop();
+                                            mediaPlayer = null;
+                                        }
                                     }
                                     mediaPlayer = new MediaPlayer(music);
                                     afisare_melodie();
